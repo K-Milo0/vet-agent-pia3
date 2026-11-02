@@ -27,7 +27,7 @@ RECHAZAR = {"aprobado": False, "comentarios": "falta informacion de humedad"}
 
 CASO = {
     "especie": "porcino",
-    "ubicacion": "RegiÃ³n de O'Higgins",
+    "ubicacion": "RegiÃƒÂƒÃ‚Â³n de O'Higgins",
     "resultados_laboratorio": ["PCR positivo a PRRSV"],
 }
 
@@ -87,7 +87,7 @@ def prueba_moderador_llega_al_maximo():
 
 def prueba_moderador_agente_invalido():
     # si el modelo inventa un nombre de agente, no debe romper el grafo
-    evaluacion = {"estado": "requiere_debate", "preguntas": [pregunta("agente climÃ¡tico")]}
+    evaluacion = {"estado": "requiere_debate", "preguntas": [pregunta("agente climÃƒÂƒÃ‚Â¡tico")]}
     estado = {"evaluacion": evaluacion, "revisiones": 1}
     assert despues_del_moderador(estado) == "revision_humana"
 
@@ -189,11 +189,11 @@ class EmbeddingFalso(EmbeddingFunction):
 
 PEDAZOS = [
     ("PRRS en cerdos: ELISA en fluidos orales", "porcino"),
-    ("SÃ­ndrome reproductivo y respiratorio porcino", "porcino"),
+    ("SÃƒÂƒÃ‚Â­ndrome reproductivo y respiratorio porcino", "porcino"),
     ("Vigilancia de PRRS en granjas de cerdos", "porcino"),
     ("Influenza aviar H5N1 en aves de corral", "aviar"),
     ("RT-PCR para influenza aviar", "aviar"),
-    ("Toma y envÃ­o de muestras al laboratorio", "general"),
+    ("Toma y envÃƒÂƒÃ‚Â­o de muestras al laboratorio", "general"),
 ]
 
 
@@ -224,9 +224,9 @@ def con_buscador_de_prueba(prueba, usar_colecciones=False):
 def prueba_filtro_excluir_porcino():
     def revisar():
         sin = buscar.buscar_crudo("prueba_md", "PRRS en cerdos", k=6)
-        assert sin and all(p["enfermedad"] != "porcino" for p in sin), "devolviÃ³ pedazos porcinos"
+        assert sin and all(p["enfermedad"] != "porcino" for p in sin), "devolviÃƒÂƒÃ‚Â³ pedazos porcinos"
         con = buscar.buscar_crudo("prueba_md", "PRRS en cerdos", k=6, excluir_porcino=False)
-        assert any(p["enfermedad"] == "porcino" for p in con), "sin el filtro deberÃ­an aparecer porcinos"
+        assert any(p["enfermedad"] == "porcino" for p in con), "sin el filtro deberÃƒÂƒÃ‚Â­an aparecer porcinos"
     con_buscador_de_prueba(revisar)
 
 
@@ -234,7 +234,7 @@ def prueba_buscar_maximo_k():
     def revisar():
         for k in (1, 2, 3, 50):  # 50 es mas que los pedazos que hay
             texto = buscar.buscar("prueba_md", "influenza aviar", k=k, excluir_porcino=False)
-            assert len(texto.split("\n\n---\n\n")) <= k, f"buscar() devolviÃ³ mÃ¡s de {k}"
+            assert len(texto.split("\n\n---\n\n")) <= k, f"buscar() devolviÃƒÂƒÃ‚Â³ mÃƒÂƒÃ‚Â¡s de {k}"
             assert len(buscar.buscar_crudo("prueba_md", "influenza aviar", k=k)) <= k
     con_buscador_de_prueba(revisar)
 
@@ -246,7 +246,7 @@ def prueba_como_texto_arma_la_cabecera():
     ]
     partes = buscar.como_texto(pedazos).split("\n\n---\n\n")
     assert len(partes) == 2
-    assert partes[0] == "[D1] SAG 2024 â€” Influenza aviar\ntexto uno"
+    assert partes[0] == "[D1] SAG 2024 ÃƒÂ¢Ã¢Â‚Â¬Ã¢Â€Â Influenza aviar\ntexto uno"
     assert partes[1].startswith("[D2]") and "texto dos" in partes[1]
     assert buscar.como_texto([]) == ""
 
@@ -291,7 +291,7 @@ def prueba_chunking_md_repite_el_titulo_en_las_continuaciones():
 
 
 def prueba_cabecera_ida_y_vuelta():
-    meta = {"id": "D23", "titulo": 'ComparaciÃ³n: "aves" y cerdos', "anio": "2025"}
+    meta = {"id": "D23", "titulo": 'ComparaciÃƒÂƒÃ‚Â³n: "aves" y cerdos', "anio": "2025"}
     texto = cabecera.escribir(meta, "cuerpo\ncon dos lineas")
     assert cabecera.separar(texto) == (meta, "cuerpo\ncon dos lineas\n")
     assert cabecera.separar("sin cabecera") == ({}, "sin cabecera")
@@ -324,16 +324,16 @@ def prueba_limpiar_texto_quita_ruido_y_conserva_titulos():
 
 # ---------- pruebas de la evidencia que reciben los agentes ----------
 
-CASO_AVIAR = {"especie": "aves de corral", "signos_clinicos": ["mortalidad sÃºbita"],
+CASO_AVIAR = {"especie": "aves de corral", "signos_clinicos": ["mortalidad sÃƒÂƒÃ‚Âºbita"],
               "resultados_laboratorio": ["RT-PCR positivo a H5N1"]}
 
 
 def prueba_recortar_fragmento():
     assert base.recortar("texto corto", 50) == "texto corto"
     # corta en el ultimo espacio: no deja "influ" a medias
-    assert base.recortar("influenza aviar altamente patogena", 20) == "influenza aviar [â€¦]"
+    assert base.recortar("influenza aviar altamente patogena", 20) == "influenza aviar [ÃƒÂ¢Ã¢Â‚Â¬Ã‚Â¦]"
     # una sola palabra mas larga que el limite se corta igual
-    assert base.recortar("a" * 30, 10) == "a" * 10 + " [â€¦]"
+    assert base.recortar("a" * 30, 10) == "a" * 10 + " [ÃƒÂ¢Ã¢Â‚Â¬Ã‚Â¦]"
     largo = [{"doc_id": "X", "texto": "palabra " * 500}]
     assert len(base.texto_para_prompt(largo)) < len(buscar.como_texto(largo))
 
@@ -360,7 +360,7 @@ def prueba_evidencia_y_fuentes_reales():
         for agente, salida in resultado["resultados"].items():
             ids = [e["doc_id"] for e in salida["evidencia"]]
             assert ids and len(ids) <= K_FRAGMENTOS, f"{agente}: {ids}"
-            assert set(ids) <= no_porcinos, f"{agente} recibiÃ³ documentos porcinos: {ids}"
+            assert set(ids) <= no_porcinos, f"{agente} recibiÃƒÂƒÃ‚Â³ documentos porcinos: {ids}"
         # los "fuentes" simulados se reemplazan por los doc_id recuperados
         clima = resultado["resultados"]["climatico"]
         assert clima["factores_de_riesgo"][0]["fuentes"] == [e["doc_id"] for e in clima["evidencia"]]
@@ -394,10 +394,10 @@ def prueba_integracion_chroma_real():
 
     resultado = ejecutar([APROBAR], con_chroma_real=True, caso=CASO_AVIAR)
     for agente, salida in resultado["resultados"].items():
-        assert salida["evidencia"], f"{agente} no recuperÃ³ evidencia del chroma_db real"
+        assert salida["evidencia"], f"{agente} no recuperÃƒÂƒÃ‚Â³ evidencia del chroma_db real"
     # el informe cita documentos que existen en la base
     citados = [f["doc_id"] for f in resultado["evaluacion"]["informe"]["fuentes_utilizadas"]]
-    assert citados, "el informe quedarÃ­a sin fuentes"
+    assert citados, "el informe quedarÃƒÂƒÃ‚Â­a sin fuentes"
     assert set(citados) == {e["doc_id"] for s in resultado["resultados"].values() for e in s["evidencia"]}
 
 
@@ -475,8 +475,8 @@ def prueba_demo_rechazo_sin_comentario():
         for texto in ("", "   "):
             at.text_area(key="comentarios").input(texto)
             apretar(at, "Rechazar")
-            assert "Escribe un comentario para que el moderador sepa quÃ© corregir." in avisos(at)
-            assert at.session_state["resultado"]["__interrupt__"] == pausa, "no debÃ­a reanudar"
+            assert "Escribe un comentario para que el moderador sepa quÃƒÂƒÃ‚Â© corregir." in avisos(at)
+            assert at.session_state["resultado"]["__interrupt__"] == pausa, "no debÃƒÂƒÃ‚Â­a reanudar"
         # con comentario: el moderador lo recibe y vuelve a pedir revision
         at.text_area(key="comentarios").input("falta informacion de humedad")
         apretar(at, "Rechazar")
@@ -565,7 +565,7 @@ def prueba_api_endpoints():
 # ---------- prueba de la carga de escenarios (T2) ----------
 
 def prueba_cargar_escenarios_ejemplo():
-    # reproduce la fila de ejemplo (IAAP-00) de la plantilla de InvestigaciÃ³n
+    # reproduce la fila de ejemplo (IAAP-00) de la plantilla de InvestigaciÃƒÂƒÃ‚Â³n
     # y revisa que se convierta al JSON con la Parte A y la Parte B separadas
     import openpyxl
     from vet_agent.datos.cargar_escenarios import escenarios_de_hoja
@@ -596,8 +596,8 @@ def prueba_cargar_escenarios_ejemplo():
     fila = [
         "EJEMPLO IAAP-00", "Brote sospechoso IAAP en plantel de ponedoras", "borrador_1", "Nombre del autor", "simulado",
         "aves", "ponedoras comerciales",
-        "ValparaÃ­so", "(comuna)", "2026-10-20",
-        50000, "mortalidad sÃºbita; edema facial",
+        "ValparaÃƒÂƒÃ‚Â­so", "(comuna)", "2026-10-20",
+        50000, "mortalidad sÃƒÂƒÃ‚Âºbita; edema facial",
         2.5, 8,
         "PCR", "positivo", "2026-10-22",
         None, None, None,
@@ -620,12 +620,12 @@ def prueba_cargar_escenarios_ejemplo():
     assert ej["id_escenario"] == "IAAP-00"
     assert ej["titulo"] == "Brote sospechoso IAAP en plantel de ponedoras"
 
-    # Parte A: anidaciÃ³n, nÃºmeros y listas
+    # Parte A: anidaciÃƒÂƒÃ‚Â³n, nÃƒÂƒÃ‚Âºmeros y listas
     a = ej["parte_a_entrada"]
     assert a["especie"] == "aves"
     assert a["n_animales"] == 50000
     assert a["mortalidad_pct"] == 2.5
-    assert a["signos_clinicos"] == ["mortalidad sÃºbita", "edema facial"]
+    assert a["signos_clinicos"] == ["mortalidad sÃƒÂƒÃ‚Âºbita", "edema facial"]
     assert a["clima"]["temperatura_media_c"] == 14.2
     assert a["resultados_laboratorio"] == [
         {"prueba": "PCR", "resultado": "positivo", "fecha": "2026-10-22"}
@@ -636,13 +636,13 @@ def prueba_cargar_escenarios_ejemplo():
     assert b["nivel_riesgo"] == "alto"
     assert b["documentos_esperados"] == ["C21", "C45"]
 
-    # celdas vacÃ­as -> None y la columna tipo_caso se ignora
+    # celdas vacÃƒÂƒÃ‚Â­as -> None y la columna tipo_caso se ignora
     assert a["movimientos_animales"] is None
     assert "tipo_caso" not in ej
 
 # ---------- pruebas del registro de corridas (evaluar.py, formato E1 v6) ----------
 
-CASO_EVALUAR = {"especie": "aves", "signos_clinicos": ["mortalidad sÃºbita"],
+CASO_EVALUAR = {"especie": "aves", "signos_clinicos": ["mortalidad sÃƒÂƒÃ‚Âºbita"],
                 "resultados_laboratorio": [{"prueba": "RT-PCR", "resultado": "positivo", "fecha": "2026-10-22"}]}
 
 
@@ -728,7 +728,7 @@ def prueba_llm_respuesta_cortada_por_max_tokens():
     llm._modelo, llm.USAR_SIMULACION = Cliente(), False
     try:
         llm.consultar_llm("instrucciones", "pregunta", "climatico")
-        assert False, "debÃ­a lanzar un error"
+        assert False, "debÃƒÂƒÃ‚Â­a lanzar un error"
     except ValueError as e:
         assert "max_tokens" in str(e)
     finally:
@@ -739,9 +739,9 @@ def prueba_llm_respuesta_cortada_por_max_tokens():
 # ---------- pruebas de la tabla de planteles simulados ----------
 
 def prueba_buscar_planteles_por_region():
-    df = buscar_planteles(region="ValparaÃ­so")
+    df = buscar_planteles(region="ValparaÃƒÂƒÃ‚Â­so")
     assert len(df) == 5
-    assert set(df["region"]) == {"ValparaÃ­so"}
+    assert set(df["region"]) == {"ValparaÃƒÂƒÃ‚Â­so"}
     assert set(df["id_plantel"]) == {"PL-001", "PL-002", "PL-003", "PL-004", "PL-005"}
 
 
@@ -764,7 +764,7 @@ def prueba_traer_clima():
     archivo = {"daily": {"time": ["2026-10-20"], "temperature_2m_mean": [15.2],
                           "relative_humidity_2m_mean": [78.0], "precipitation_sum": [0.4]}}
     resultado = con_clima_falso(geocodificacion, archivo,
-                                 lambda: clima.traer_clima("ValparaÃ­so", "2026-10-20"))
+                                 lambda: clima.traer_clima("ValparaÃƒÂƒÃ‚Â­so", "2026-10-20"))
     assert resultado == {"temperatura_media_c": 15.2, "humedad_relativa_pct": 78.0, "precipitacion_mm": 0.4}
 
 
@@ -779,7 +779,7 @@ def prueba_traer_clima_datos_incompletos():
     archivo = {"daily": {"time": ["2026-10-26"], "temperature_2m_mean": [15.2],
                           "relative_humidity_2m_mean": [None], "precipitation_sum": [0.4]}}
     resultado = con_clima_falso(geocodificacion, archivo,
-                                 lambda: clima.traer_clima("ValparaÃ­so", "2026-10-26"))
+                                 lambda: clima.traer_clima("ValparaÃƒÂƒÃ‚Â­so", "2026-10-26"))
     assert resultado is None
 
 
@@ -789,7 +789,7 @@ def prueba_demo_traer_clima():
                           "relative_humidity_2m_mean": [78.0], "precipitation_sum": [0.4]}}
 
     def revisar(at):
-        at.text_input(key="lugar_clima").input("ValparaÃ­so")
+        at.text_input(key="lugar_clima").input("ValparaÃƒÂƒÃ‚Â­so")
         at.text_input(key="fecha_clima").input("2026-10-20")
         con_clima_falso(geocodificacion, archivo, lambda: apretar(at, "Traer clima"))
         assert at.text_input(key="clima_temperatura_media_c").value == "15.2"
@@ -867,21 +867,19 @@ if __name__ == "__main__":
     if omitidas:
         resumen += f", {omitidas} omitida(s)"
     print("\n" + resumen)
-
 def prueba_revisar_escenarios_tmp():
     import json
     import pathlib
     import tempfile
     from vet_agent.datos import revisar_escenarios
 
-    # crear carpeta temporal con un escenario de prueba
     tmpdir = pathlib.Path(tempfile.mkdtemp())
     escenario = {
         "id_escenario": "TST-01",
         "titulo": "Prueba",
         "parte_a_entrada": {
             "especie": "aves",
-            "region": "ValparaÃ­so",
+            "region": "Valparaíso",
             "n_animales": 1000,
             "mortalidad_pct": 1.5,
             "morbilidad_pct": 2.0,
@@ -902,6 +900,6 @@ def prueba_revisar_escenarios_tmp():
     res = revisar_escenarios.revisar_archivo(ruta, equiv, ids_ok)
     assert res["id_escenario"] == "TST-01"
     assert "documentos_esperados_traducidos" in res
-    # no debe crashear aunque falten equivalencias
     assert isinstance(res["avisos"], list)
     assert isinstance(res["errores"], list)
+    assert escenario["parte_a_entrada"]["region"] == "Valparaíso"
