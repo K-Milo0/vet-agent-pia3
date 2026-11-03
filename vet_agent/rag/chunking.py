@@ -1,6 +1,5 @@
-# Tarea 3: cortar(texto) -> lista de pedazos de ~1200 caracteres
-#
-# 
+# Corta el texto de cada documento en pedazos de ~1200 caracteres para indexarlos en Chroma:
+# cortar(texto) para texto plano y cortar_md(texto), que respeta los titulos del Markdown
 
 import re
 

@@ -1,4 +1,4 @@
-"""Tarea 8: guardar los pedazos de los .md en una coleccion de Chroma aparte.
+"""Guarda los pedazos de los .md en las colecciones *_md de Chroma.
 
 Uso (raiz del repo):
     python -m vet_agent.rag.indexar_md                                   # las 3 colecciones *_md
