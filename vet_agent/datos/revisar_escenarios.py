@@ -1,4 +1,4 @@
-﻿"""Script para revisar escenarios JSON (Tarea 3 · Camilo).
+"""Script para revisar escenarios JSON (Tarea 3 · Camilo).
 
 Revisa los archivos de corpus/escenarios, valida campos, traduce documentos_esperados
 con las equivalencias de Revision_fuentes_scraping_PIA3.xlsx y comprueba que existan
@@ -20,6 +20,14 @@ EQUIV_XLSX = RAIZ / "corpus" / "fuentes" / "Revision_fuentes_scraping_PIA3.xlsx"
 VALIDACION_XLSX = RAIZ / "corpus" / "md" / "reporte_validacion.xlsx"
 
 
+def _columna(encabezado, nombre):
+    """Indice de la columna `nombre` en la fila de encabezados (asi no depende del orden)."""
+    nombres = [str(c).strip() if c is not None else "" for c in encabezado]
+    if nombre not in nombres:
+        raise KeyError(f"no está la columna {nombre!r} en los encabezados: {nombres}")
+    return nombres.index(nombre)
+
+
 def _cargar_equivalencias():
     try:
         import openpyxl
@@ -31,10 +39,14 @@ def _cargar_equivalencias():
     if "Equivalencias IDs" not in wb.sheetnames:
         return {}
     ws = wb["Equivalencias IDs"]
+    filas = ws.iter_rows(values_only=True)
+    encabezado = next(filas, ())
+    col_viejo = _columna(encabezado, "ID anterior (planilla antigua)")
+    col_nuevo = _columna(encabezado, "ID vigente (Anexo A / E4)")
     equiv = {}
-    for r in ws.iter_rows(min_row=2, values_only=True):
-        viejo = r[0]
-        nuevo = r[2]
+    for r in filas:
+        viejo = r[col_viejo]
+        nuevo = r[col_nuevo]
         if viejo and nuevo:
             viejo_s = str(viejo).strip()
             nuevo_s = str(nuevo).strip()
@@ -54,10 +66,14 @@ def _cargar_ids_ok():
     if "Archivos" not in wb.sheetnames:
         return set()
     ws = wb["Archivos"]
+    filas = ws.iter_rows(values_only=True)
+    encabezado = next(filas, ())
+    col_id = _columna(encabezado, "id")
+    col_estado = _columna(encabezado, "estado")
     ids_ok = set()
-    for r in ws.iter_rows(min_row=2, values_only=True):
-        id_ = r[0]
-        estado = r[15]
+    for r in filas:
+        id_ = r[col_id]
+        estado = r[col_estado]
         if id_ and estado:
             if str(estado).strip().lower() != "excluido":
                 ids_ok.add(str(id_).strip())

@@ -13,6 +13,7 @@ import streamlit as st
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
+from vet_agent.api import listar_escenarios, obtener_escenario
 from vet_agent.config import USAR_SIMULACION, LLM_MODELO, LLM_URL, LLM_TIMEOUT
 from vet_agent.datos import clima
 from vet_agent.grafo import construir_grafo, ESPECIALISTAS
@@ -111,35 +112,74 @@ def _como_texto(valor) -> str:
 
 
 def formulario_caso() -> dict:
-    """Muestra el caso precargado y devuelve lo que quedo escrito."""
+    """Muestra el caso precargado (o el escenario elegido, ver cargar_escenario_en_formulario)
+    y devuelve lo que quedo escrito."""
     caso = {}
     for campo, valor in CASO_H5N1.items():
+        # con la clave en session_state, el selectbox de escenarios y el boton "Traer clima"
+        # pueden pre-llenar estos campos antes de que se vuelvan a dibujar
+        clave = f"caso_{campo}"
         if isinstance(valor, list) and valor and isinstance(valor[0], dict):
             # lista de objetos (ej: resultados_laboratorio): se edita como JSON
-            texto = st.text_area(etiqueta(campo) + " (JSON)",
-                                 json.dumps(valor, ensure_ascii=False, indent=2))
+            etiqueta_campo = etiqueta(campo) + " (JSON)"
+            if clave in st.session_state:
+                texto = st.text_area(etiqueta_campo, key=clave)
+            else:
+                texto = st.text_area(etiqueta_campo, json.dumps(valor, ensure_ascii=False, indent=2), key=clave)
             try:
                 caso[campo] = json.loads(texto)
             except json.JSONDecodeError:
                 caso[campo] = valor  # si lo rompen, se conserva el valor precargado
         elif isinstance(valor, list):
-            texto = st.text_area(etiqueta(campo) + " (uno por línea)", "\n".join(valor))
+            etiqueta_campo = etiqueta(campo) + " (uno por línea)"
+            if clave in st.session_state:
+                texto = st.text_area(etiqueta_campo, key=clave)
+            else:
+                texto = st.text_area(etiqueta_campo, "\n".join(valor), key=clave)
             caso[campo] = [linea.strip() for linea in texto.splitlines() if linea.strip()]
         elif isinstance(valor, dict):
             st.markdown(f"**{etiqueta(campo)}**")
             columnas = st.columns(len(valor))
             caso[campo] = {}
             for col, (k, v) in zip(columnas, valor.items()):
-                # con la clave en session_state, el boton "Traer clima" puede pre-llenar
-                # estos campos antes de que se vuelvan a dibujar (ver pedir_clima)
-                clave = f"{campo}_{k}"
-                if clave in st.session_state:
-                    caso[campo][k] = col.text_input(etiqueta(k), key=clave)
+                subclave = f"{clave}_{k}"
+                if subclave in st.session_state:
+                    caso[campo][k] = col.text_input(etiqueta(k), key=subclave)
                 else:
-                    caso[campo][k] = col.text_input(etiqueta(k), _como_texto(v), key=clave)
+                    caso[campo][k] = col.text_input(etiqueta(k), _como_texto(v), key=subclave)
         else:
-            caso[campo] = st.text_input(etiqueta(campo), _como_texto(valor))
+            if clave in st.session_state:
+                caso[campo] = st.text_input(etiqueta(campo), key=clave)
+            else:
+                caso[campo] = st.text_input(etiqueta(campo), _como_texto(valor), key=clave)
     return caso
+
+
+ESCENARIO_EJEMPLO = "Caso de ejemplo (H5N1)"
+
+
+def opciones_escenarios() -> list[str]:
+    return [ESCENARIO_EJEMPLO] + listar_escenarios()
+
+
+def cargar_escenario_en_formulario(datos: dict):
+    """Pone la Parte A de un escenario en session_state para que formulario_caso() la muestre.
+
+    Usa CASO_H5N1 como plantilla de los campos que existen: lo que falte en el escenario
+    elegido queda vacio, para no dejar pegado algo del escenario anterior.
+    """
+    for campo, plantilla in CASO_H5N1.items():
+        valor = datos.get(campo)
+        clave = f"caso_{campo}"
+        if isinstance(plantilla, list) and plantilla and isinstance(plantilla[0], dict):
+            st.session_state[clave] = json.dumps(valor or [], ensure_ascii=False, indent=2)
+        elif isinstance(plantilla, list):
+            st.session_state[clave] = "\n".join(valor or [])
+        elif isinstance(plantilla, dict):
+            for k in plantilla:
+                st.session_state[f"{clave}_{k}"] = _como_texto((valor or {}).get(k))
+        else:
+            st.session_state[clave] = _como_texto(valor)
 
 
 def cita(e: dict) -> str:
@@ -248,6 +288,61 @@ def mostrar_informe(resultado: dict, pausa: dict | None):
         st.info("El informe no cita fuentes.")
 
 
+def informe_a_markdown(informe: dict, resultado: dict) -> str:
+    """Arma en Markdown el mismo informe que se ve en pantalla, para el boton de descarga."""
+    lineas = ["# Informe epidemiológico", ""]
+    if informe.get("resumen_ejecutivo"):
+        lineas += ["## Resumen", "", informe["resumen_ejecutivo"], ""]
+
+    nivel = informe.get("nivel_riesgo_global")
+    if nivel:
+        lineas.append(f"## Nivel de riesgo: {nivel.replace('_', ' ').upper()}")
+        lineas.append("")
+        if informe.get("justificacion_riesgo"):
+            lineas += [informe["justificacion_riesgo"], ""]
+
+    if informe.get("riesgos_identificados"):
+        lineas.append("## Riesgos")
+        for r in informe["riesgos_identificados"]:
+            lineas.append(f"- **{r.get('riesgo', '')}** · {r.get('dimension_one_health', '')} · "
+                          f"confianza {r.get('confianza', '')} {citas(r.get('evidencia'))}")
+        lineas.append("")
+
+    if informe.get("recomendaciones"):
+        lineas.append("## Recomendaciones")
+        for r in informe["recomendaciones"]:
+            lineas.append(
+                f"- **{r.get('accion', '')}** · {r.get('prioridad', '').replace('_', ' ')}"
+                + (f" · responsable: {r['responsable_sugerido']}" if r.get("responsable_sugerido") else "")
+                + (" · requiere autoridad sanitaria" if r.get("requiere_autoridad") else "")
+                + f" {citas(r.get('fuentes'))}")
+        lineas.append("")
+
+    if informe.get("protocolos_bioseguridad"):
+        lineas.append("## Protocolos")
+        lineas += [f"- {p}" for p in informe["protocolos_bioseguridad"]]
+        lineas.append("")
+
+    if informe.get("incertidumbres_y_limitaciones"):
+        lineas.append("## Incertidumbres")
+        lineas += [f"- {i}" for i in informe["incertidumbres_y_limitaciones"]]
+        lineas.append("")
+
+    if informe.get("aviso"):
+        lineas += ["## Aviso", "", informe["aviso"], ""]
+
+    fuentes = informe.get("fuentes_utilizadas", [])
+    if fuentes:
+        titulos = {e["doc_id"]: e["titulo"] for s in resultado.get("resultados", {}).values()
+                   for e in s.get("evidencia", [])}
+        lineas.append("## Fuentes utilizadas")
+        for f in fuentes:
+            titulo = titulos.get(f["doc_id"], "")
+            lineas.append(f"- `{f['doc_id']}`" + (f" — {titulo}" if titulo else ""))
+
+    return "\n".join(lineas)
+
+
 # Los botones solo dejan anotado el pedido (on_click corre antes de redibujar la pagina):
 # asi, mientras el grafo corre, todos los botones ya se dibujan desactivados y no se
 # pueden lanzar dos peticiones al LLM a la vez. El pedido se ejecuta al final del script.
@@ -282,9 +377,22 @@ def pedir_clima():
     st.session_state.clima_error = resultado is None
     if resultado:
         # traer_clima() devuelve las mismas claves que CASO_H5N1["clima"], asi que
-        # calzan con las que usa formulario_caso() para precargar el campo (clima_<clave>)
+        # calzan con las que usa formulario_caso() para precargar el campo (caso_clima_<clave>)
         for k, v in resultado.items():
-            st.session_state[f"clima_{k}"] = str(v)
+            st.session_state[f"caso_clima_{k}"] = str(v)
+
+
+def pedir_escenario():
+    id_escenario = st.session_state.get("escenario_elegido")
+    if not id_escenario:
+        return
+    # el caso de ejemplo tambien se carga: si no, quedarian los datos del escenario anterior
+    datos = CASO_H5N1 if id_escenario == ESCENARIO_EJEMPLO else obtener_escenario(id_escenario)
+    cargar_escenario_en_formulario(datos)
+    # el lugar/fecha del boton "Traer clima" tambien se actualizan: si no, quedarian
+    # apuntando al caso anterior y "Traer clima" traeria el clima de otro lugar/fecha
+    st.session_state["lugar_clima"] = datos.get("comuna") or datos.get("region") or ""
+    st.session_state["fecha_clima"] = datos.get("fecha_evento") or ""
 
 
 def revision(corriendo: bool):
@@ -327,6 +435,9 @@ st.warning(AVISO, icon="⚠️")
 pedido = st.session_state.get("pedido")
 corriendo = pedido is not None
 
+st.selectbox("Escenario", opciones_escenarios(), key="escenario_elegido",
+             on_change=pedir_escenario, disabled=corriendo)
+
 lugar_col, fecha_col, boton_col = st.columns([2, 2, 1])
 # primer dibujo: se precarga con la comuna/region y la fecha del caso; despues manda lo que escriba la persona
 lugar_defecto = CASO_H5N1.get("comuna") or CASO_H5N1.get("region", "")
@@ -363,6 +474,11 @@ if resultado:
         revision(corriendo)
     elif not pausa:
         st.success("Informe aprobado por el revisor.")
+        informe = resultado.get("evaluacion", {}).get("informe", {})
+        id_escenario = st.session_state.get("escenario_elegido")
+        nombre = f"informe_{id_escenario}.md" if id_escenario and id_escenario != ESCENARIO_EJEMPLO else "informe.md"
+        st.download_button("Descargar informe (Markdown)", informe_a_markdown(informe, resultado),
+                           file_name=nombre, mime="text/markdown")
 
 if error:
     st.error(error["mensaje"])

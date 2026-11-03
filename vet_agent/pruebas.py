@@ -444,6 +444,11 @@ def hay_boton(at, etiqueta):
     return any(b.label == etiqueta for b in at.button)
 
 
+def hay_descarga(at, etiqueta):
+    # st.download_button es un tipo de elemento aparte de st.button en AppTest
+    return any(b.label == etiqueta for b in at.download_button)
+
+
 def avisos(at):
     return [w.value for w in at.warning]
 
@@ -792,9 +797,9 @@ def prueba_demo_traer_clima():
         at.text_input(key="lugar_clima").input("Valparaíso")
         at.text_input(key="fecha_clima").input("2026-10-20")
         con_clima_falso(geocodificacion, archivo, lambda: apretar(at, "Traer clima"))
-        assert at.text_input(key="clima_temperatura_media_c").value == "15.2"
-        assert at.text_input(key="clima_humedad_relativa_pct").value == "78.0"
-        assert at.text_input(key="clima_precipitacion_mm").value == "0.4"
+        assert at.text_input(key="caso_clima_temperatura_media_c").value == "15.2"
+        assert at.text_input(key="caso_clima_humedad_relativa_pct").value == "78.0"
+        assert at.text_input(key="caso_clima_precipitacion_mm").value == "0.4"
         assert not any("Open-Meteo" in a for a in avisos(at))
     con_demo(revisar)
 
@@ -808,7 +813,53 @@ def prueba_demo_traer_clima_sin_resultado():
     con_demo(revisar)
 
 
+# ---------- pruebas de cargar un escenario y descargar el informe (demo) ----------
 
+def prueba_demo_cargar_escenario():
+    # IAAP-12 (corpus/escenarios/IAAP-12.json) tiene valores bien distintos al caso
+    # de ejemplo, asi que si estos calzan es porque realmente se cargo el escenario
+    def revisar(at):
+        at.selectbox(key="escenario_elegido").select("IAAP-12").run()
+        assert not at.exception, at.exception
+        assert at.text_input(key="caso_region").value == "La Araucanía"
+        assert at.text_input(key="caso_comuna").value == "Puerto Saavedra"
+        assert at.text_input(key="caso_n_animales").value == "47"
+        assert at.text_input(key="caso_morbilidad_pct").value == ""  # viene null en el escenario
+        assert at.text_input(key="caso_clima_temperatura_media_c").value == "14.0"
+        assert "incoordinación en patos" in at.text_area(key="caso_signos_clinicos").value
+        assert "RT-PCR influenza A" in at.text_area(key="caso_resultados_laboratorio").value
+        # el lugar/fecha del boton "Traer clima" tambien se actualizan al cambiar de escenario
+        # (si no, "Traer clima" traeria el clima de otro lugar/fecha sin que se note)
+        assert at.text_input(key="lugar_clima").value == "Puerto Saavedra"
+        assert at.text_input(key="fecha_clima").value == "2026-03-09"
+    con_demo(revisar)
+
+
+def prueba_demo_volver_al_caso_de_ejemplo():
+    # al volver al caso de ejemplo el formulario no debe quedar con los datos de IAAP-12
+    from vet_agent.main import CASO_H5N1
+
+    def revisar(at):
+        at.selectbox(key="escenario_elegido").select("IAAP-12").run()
+        at.selectbox(key="escenario_elegido").select("Caso de ejemplo (H5N1)").run()
+        assert not at.exception, at.exception
+        assert at.text_input(key="caso_region").value == CASO_H5N1["region"]
+        assert at.text_input(key="caso_comuna").value == CASO_H5N1["comuna"]
+        assert at.text_input(key="lugar_clima").value == (CASO_H5N1.get("comuna") or CASO_H5N1["region"])
+    con_demo(revisar)
+
+
+def prueba_demo_boton_descarga_solo_tras_aprobar():
+    def revisar(at):
+        assert not hay_descarga(at, "Descargar informe (Markdown)")
+        apretar(at, "Analizar")
+        assert not hay_descarga(at, "Descargar informe (Markdown)")  # aun en revision humana
+        apretar(at, "Aprobar")
+        assert hay_descarga(at, "Descargar informe (Markdown)")
+    con_demo(revisar)
+
+
+# ---------- pruebas del script que revisa escenarios (Tarea 3) ----------
 
 def prueba_revisar_escenarios_tmp():
     import json
@@ -845,6 +896,10 @@ def prueba_revisar_escenarios_tmp():
     assert 'documentos_esperados_traducidos' in res
     assert isinstance(res['avisos'], list)
     assert isinstance(res['errores'], list)
+    assert res['errores'] == []
+    # C21 esta en el corpus: solo se puede comprobar si hay reporte de validacion local
+    if ids_ok:
+        assert 'C21' not in res['faltantes']
     assert escenario['parte_a_entrada']['region'] == 'Valparaíso'
 
 
@@ -892,6 +947,11 @@ if __name__ == "__main__":
         prueba_traer_clima_datos_incompletos,
         prueba_demo_traer_clima,
         prueba_demo_traer_clima_sin_resultado,
+        prueba_demo_cargar_escenario,
+        prueba_demo_volver_al_caso_de_ejemplo,
+        prueba_demo_boton_descarga_solo_tras_aprobar,
+
+        prueba_revisar_escenarios_tmp,
     ]
     pasaron = omitidas = 0
     for prueba in pruebas:
