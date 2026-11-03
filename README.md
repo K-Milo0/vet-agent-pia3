@@ -88,16 +88,33 @@ python -m vet_agent.evaluar --escenarios corpus/escenarios --repeticiones 3
 
 Necesita `chroma_db` armada y LM Studio encendido (o `USAR_SIMULACION=true`). **Una corrida completa con el modelo real puede tomar muchas horas.** Cada intento queda como una fila en `resultados/registro_corridas.csv`, y el resumen de la última ejecución en `resultados/comparacion.csv`.
 
-## Carpetas
+## Estructura del repositorio
 
-- `vet_agent/agentes`: los cuatro agentes (climático, diagnóstico, bioseguridad y moderador) y su base común.
-- `vet_agent/rag`: descarga, limpieza, validación e indexación de documentos, y la búsqueda en Chroma.
-- `vet_agent/datos`: clima (Open-Meteo), tabla de planteles simulados y carga de escenarios desde Excel.
-- `corpus`: documentos fuente, metadatos, escenarios de Investigación (`escenarios/`) y preguntas de prueba.
-- `resultados`: salidas de `evaluar.py` (comparaciones y registro de corridas).
-- `docs`: documentación del proyecto (diccionario de datos).
+```
+vet-agent-pia3/
+├── app_demo.py            demo web (Streamlit): formulario, agentes y revisión humana
+├── vet_agent/             el sistema
+│   ├── grafo.py           flujo entre agentes (LangGraph) y pausa para la revisión humana
+│   ├── prompts.py         prompts de los agentes (versión v1, congelada)
+│   ├── main.py · api.py   uso por terminal y por API (FastAPI)
+│   ├── evaluar.py         compara B1 (LLM sin RAG), B2 (un agente con RAG) y B3 (multiagente)
+│   ├── pruebas.py         pruebas automáticas
+│   ├── agentes/           climático, diagnóstico, bioseguridad, moderador y su base común
+│   ├── rag/               arma el corpus (descargar → limpiar → validar → indexar) y busca en Chroma
+│   └── datos/             clima (Open-Meteo), planteles simulados y escenarios
+├── corpus/                fuentes, metadatos, escenarios IAAP y preguntas de prueba
+├── resultados/            salidas de evaluar.py (comparaciones y registro de corridas)
+└── docs/                  diccionario de datos e imagen del grafo
+```
 
-Además, en la raíz: `app_demo.py` (demo), `vet_agent/prompts.py` (prompts de los agentes), `vet_agent/grafo.py` (flujo entre agentes) y `.env.ejemplo` (configuración de ejemplo).
+| Carpeta | Para la presentación |
+|---|---|
+| `vet_agent/agentes/` | Los cuatro especialistas: cada uno busca evidencia en su colección y responde en JSON; el moderador integra y puede pedir aclaraciones. |
+| `vet_agent/rag/` | El pipeline del corpus: `prefiltro` → `descargar_md` → `pdf_local` → `limpiar_texto` → `validar` → `indexar_md`, y la búsqueda (`buscar`). Utilidades: `probar_rag` (Recall@5), `para_investigacion` (reporte para Investigación) y `borrar_sobrantes` (borra archivos que ya no se usan). |
+| `vet_agent/datos/` | Datos de entrada del caso: clima real, planteles simulados, carga de escenarios desde Excel (`cargar_escenarios`) y su revisión (`revisar_escenarios`). |
+| `corpus/` | Lo que entrega Investigación (`fuentes/`, `escenarios/`) y lo que genera el pipeline (`md/`, que no está en git salvo los 18 documentos del eje D y los Excel de reporte). |
+| `resultados/` | Comparación de configuraciones (`gguf/`, `mlx/`, `prueba_seco/`); ver [resultados/README.md](resultados/README.md). |
+| `docs/` | [Diccionario de datos](docs/diccionario_datos.md) y [grafo.png](docs/grafo.png) (se regenera con `python -m vet_agent.ver_grafo`). |
 
 ## Más información
 
