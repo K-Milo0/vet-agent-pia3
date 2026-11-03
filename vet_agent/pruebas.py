@@ -859,6 +859,50 @@ def prueba_demo_boton_descarga_solo_tras_aprobar():
     con_demo(revisar)
 
 
+# ---------- pruebas del script que revisa escenarios (Tarea 3) ----------
+
+def prueba_revisar_escenarios_tmp():
+    import json
+    import pathlib
+    import tempfile
+    from vet_agent.datos import revisar_escenarios
+
+    tmpdir = pathlib.Path(tempfile.mkdtemp())
+    escenario = {
+        'id_escenario': 'TST-01',
+        'titulo': 'Prueba',
+        'parte_a_entrada': {
+            'especie': 'aves',
+            'region': 'Valparaíso',
+            'n_animales': 1000,
+            'mortalidad_pct': 1.5,
+            'morbilidad_pct': 2.0,
+            'clima': {
+                'temperatura_media_c': 12.0,
+                'humedad_relativa_pct': 70.0,
+                'precipitacion_mm': 1.0
+            }
+        },
+        'parte_b_referencia': {
+            'documentos_esperados': ['C21']
+        }
+    }
+    ruta = tmpdir / 'TST-01.json'
+    ruta.write_text(json.dumps(escenario, ensure_ascii=False), encoding='utf-8')
+    equiv = revisar_escenarios._cargar_equivalencias()
+    ids_ok = revisar_escenarios._cargar_ids_ok()
+    res = revisar_escenarios.revisar_archivo(ruta, equiv, ids_ok)
+    assert res['id_escenario'] == 'TST-01'
+    assert 'documentos_esperados_traducidos' in res
+    assert isinstance(res['avisos'], list)
+    assert isinstance(res['errores'], list)
+    assert res['errores'] == []
+    # C21 esta en el corpus: solo se puede comprobar si hay reporte de validacion local
+    if ids_ok:
+        assert 'C21' not in res['faltantes']
+    assert escenario['parte_a_entrada']['region'] == 'Valparaíso'
+
+
 if __name__ == "__main__":
     pruebas = [
         prueba_moderador_informe_final,
@@ -906,6 +950,8 @@ if __name__ == "__main__":
         prueba_demo_cargar_escenario,
         prueba_demo_volver_al_caso_de_ejemplo,
         prueba_demo_boton_descarga_solo_tras_aprobar,
+
+        prueba_revisar_escenarios_tmp,
     ]
     pasaron = omitidas = 0
     for prueba in pruebas:
