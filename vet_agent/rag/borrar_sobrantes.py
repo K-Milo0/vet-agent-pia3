@@ -1,8 +1,8 @@
-"""Borra archivos que ya no se usan.
+"""Borra archivos que ya no se usan (no confundir con limpiar_texto, que limpia el contenido de los .md).
 
 Uso (raiz del repo):
-    python -m vet_agent.rag.limpiar --prueba    # solo lista lo que se borraria (no borra nada)
-    python -m vet_agent.rag.limpiar             # borra de verdad
+    python -m vet_agent.rag.borrar_sobrantes --prueba    # solo lista lo que se borraria (no borra nada)
+    python -m vet_agent.rag.borrar_sobrantes             # borra de verdad
 
 Borra:
 - corpus/md/_tmp_pdf/       PDF temporales que quedaron de una descarga cortada
