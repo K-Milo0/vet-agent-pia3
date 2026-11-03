@@ -10,3 +10,8 @@ corpus/md/**
 !corpus/md/para_investigacion.xlsx
 corpus/D/*.pdf
 .coverage
+.pytest_cache/
+# configuracion personal de editores y de Claude Code
+.claude/
+.vscode/
+.idea/
