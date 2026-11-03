@@ -25,6 +25,9 @@ llm.USAR_SIMULACION = True
 APROBAR = {"aprobado": True, "comentarios": ""}
 RECHAZAR = {"aprobado": False, "comentarios": "falta informacion de humedad"}
 
+# Caso minimo para probar el flujo del grafo (las respuestas del LLM son simuladas). Es de
+# cerdos a proposito: con especie "porcino" los agentes buscan SIN el filtro de documentos
+# porcinos, y el camino CON filtro lo cubren las pruebas que usan un caso aviar.
 CASO = {
     "especie": "porcino",
     "ubicacion": "Región de O'Higgins",

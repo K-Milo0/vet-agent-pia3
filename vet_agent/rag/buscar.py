@@ -1,4 +1,4 @@
-# Tarea 4: buscar(coleccion, pregunta, k=5), buscar_crudo(coleccion, pregunta, k=5) y como_texto(pedazos)
+# Busqueda en Chroma: buscar(coleccion, pregunta, k=5), buscar_crudo(coleccion, pregunta, k=5) y como_texto(pedazos)
 import pathlib
 import chromadb
 from chromadb.utils import embedding_functions
@@ -24,7 +24,7 @@ SIN_PORCINO = {"enfermedad": {"$ne": "porcino"}}
 
 
 def buscar_crudo(coleccion: str, pregunta: str, k: int = 5, excluir_porcino: bool = True) -> list[dict]:
-    """Devuelve los k pedazos como lista de dicts (lo usa la Tarea 5).
+    """Devuelve los k pedazos como lista de dicts (lo usan los agentes y probar_rag).
 
     Con excluir_porcino=True (por defecto) no devuelve pedazos con enfermedad "porcino".
     """

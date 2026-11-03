@@ -1,5 +1,4 @@
-# Tarea 5: preguntas de prueba y Recall@5
-"""Mide si el buscador encuentra el documento correcto.
+"""Mide si el buscador encuentra el documento correcto (Recall@5 con las preguntas de prueba).
 
 Uso (raiz del repo, despues de indexar_md):
     python -m vet_agent.rag.probar_rag                               # cada pregunta en su coleccion

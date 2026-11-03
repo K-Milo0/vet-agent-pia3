@@ -149,14 +149,18 @@ GGUF (el motor llama.cpp de LM Studio) reserva la memoria del contexto completo 
 resultados/
 ├── README.md
 ├── comparacion.csv                                 ← última corrida (GGUF); es lo que escribe evaluar.py
+├── ejemplo_registro_corridas.csv                   ← ejemplo del formato E1 v6 para Investigación (corrida simulada)
 ├── gguf/
 │   ├── comparacion_corrida1.csv                    ← corrida completa con GGUF Q4_K_M
 │   └── memoria_corrida1.csv                        ← memoria cada 5 s durante esa corrida
-└── mlx/
-    ├── comparacion_corrida1_fallo_multiagente.csv  ← multiagente con error de memoria
-    ├── comparacion_corrida3.csv                    ← corrida completa con MLX 4-bit
-    └── memoria_corrida3.csv                        ← memoria cada 5 s durante la corrida 3
+├── mlx/
+│   ├── comparacion_corrida1_fallo_multiagente.csv  ← multiagente con error de memoria
+│   ├── comparacion_corrida3.csv                    ← corrida completa con MLX 4-bit
+│   └── memoria_corrida3.csv                        ← memoria cada 5 s durante la corrida 3
+└── prueba_seco/                                    ← corrida corta con el modelo real (IAAP-12); ver su README
 ```
+
+`ejemplo_registro_corridas.csv` tiene las mismas columnas que `registro_corridas.csv` (el que escribe `evaluar.py`), pero sus datos son simulados: sirve para mostrar el formato, no como resultado.
 
 ## Limitaciones
 

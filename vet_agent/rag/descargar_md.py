@@ -52,7 +52,7 @@ from vet_agent.rag.prefiltro import RE_META_REFRESH, RUTA_EPMC, RUTA_PDF, RUTA_P
 RAIZ = pathlib.Path(__file__).resolve().parents[2]
 PREFILTRO = RAIZ / "corpus" / "md" / "prefiltro.xlsx"
 SALIDA = RAIZ / "corpus" / "md"
-TMP_PDF = SALIDA / "_tmp_pdf"     # PDF a medio convertir (se borran solos; limpiar.py borra restos)
+TMP_PDF = SALIDA / "_tmp_pdf"     # PDF a medio convertir (se borran solos; borrar_sobrantes.py borra restos)
 LOGS = SALIDA / "_logs"
 CACHE_DESCARGAS = SALIDA / "_cache" / "descargas"  # XML/HTML ya bajados (no PDF)
 USAR_CACHE = True
@@ -293,7 +293,7 @@ def main() -> None:
 
     fuentes = pd.read_excel(PREFILTRO, sheet_name="Fuentes", dtype=str).fillna("")
     fuentes = fuentes[fuentes.descargar == "sí"].to_dict("records")
-    # lo que la validacion descarto y limpiar.py borro no se vuelve a bajar (salvo que cambie su URL)
+    # lo que la validacion descarto y borrar_sobrantes.py borro no se vuelve a bajar (salvo que cambie su URL)
     archivo = RAIZ / "corpus" / "md" / "_cache" / "descartados.json"
     descartados = json.loads(archivo.read_text(encoding="utf-8")) if archivo.exists() else {}
     saltar = [f for f in fuentes if descartados.get(f"{f['coleccion']}/{f['id']}") == f["url_descarga"]]
