@@ -835,6 +835,20 @@ def prueba_demo_cargar_escenario():
     con_demo(revisar)
 
 
+def prueba_demo_volver_al_caso_de_ejemplo():
+    # al volver al caso de ejemplo el formulario no debe quedar con los datos de IAAP-12
+    from vet_agent.main import CASO_H5N1
+
+    def revisar(at):
+        at.selectbox(key="escenario_elegido").select("IAAP-12").run()
+        at.selectbox(key="escenario_elegido").select("Caso de ejemplo (H5N1)").run()
+        assert not at.exception, at.exception
+        assert at.text_input(key="caso_region").value == CASO_H5N1["region"]
+        assert at.text_input(key="caso_comuna").value == CASO_H5N1["comuna"]
+        assert at.text_input(key="lugar_clima").value == (CASO_H5N1.get("comuna") or CASO_H5N1["region"])
+    con_demo(revisar)
+
+
 def prueba_demo_boton_descarga_solo_tras_aprobar():
     def revisar(at):
         assert not hay_descarga(at, "Descargar informe (Markdown)")
@@ -890,6 +904,7 @@ if __name__ == "__main__":
         prueba_demo_traer_clima,
         prueba_demo_traer_clima_sin_resultado,
         prueba_demo_cargar_escenario,
+        prueba_demo_volver_al_caso_de_ejemplo,
         prueba_demo_boton_descarga_solo_tras_aprobar,
     ]
     pasaron = omitidas = 0

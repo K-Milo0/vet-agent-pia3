@@ -384,9 +384,10 @@ def pedir_clima():
 
 def pedir_escenario():
     id_escenario = st.session_state.get("escenario_elegido")
-    if not id_escenario or id_escenario == ESCENARIO_EJEMPLO:
+    if not id_escenario:
         return
-    datos = obtener_escenario(id_escenario)
+    # el caso de ejemplo tambien se carga: si no, quedarian los datos del escenario anterior
+    datos = CASO_H5N1 if id_escenario == ESCENARIO_EJEMPLO else obtener_escenario(id_escenario)
     cargar_escenario_en_formulario(datos)
     # el lugar/fecha del boton "Traer clima" tambien se actualizan: si no, quedarian
     # apuntando al caso anterior y "Traer clima" traeria el clima de otro lugar/fecha
